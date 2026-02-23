@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Simple Shop</title>
+  <link rel="stylesheet" href="styles.css" />
+  <meta name="description" content="GitHub Pagesで動くシンプル物販サイト" />
+</head>
+<body>
+  <header class="header">
+    <div class="container header__inner">
+      <div class="brand">
+        <div class="brand__logo">🛒</div>
+        <div class="brand__text">
+          <div class="brand__name">Simple Shop</div>
+          <div class="brand__tag">GitHub Pages 物販テンプレ</div>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <a class="nav__link" href="#products">商品</a>
+        <a class="nav__link" href="#cart">カート</a>
+        <a class="button button--primary" href="checkout.html">注文へ</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <h1 class="hero__title">すぐ公開できる、シンプル物販サイト</h1>
+      <p class="hero__desc">
+        商品一覧とカートを用意しました。<br />
+        決済はあとで（Stripe等）足す前提で、まず運用できる最小構成です。
+      </p>
+      <div class="hero__actions">
+        <a class="button button--primary" href="#products">商品を見る</a>
+        <button class="button" id="clearCartBtn" type="button">カートを空にする</button>
+      </div>
+    </section>
+
+    <section id="products" class="section">
+      <div class="section__head">
+        <h2 class="section__title">商品一覧</h2>
+        <div class="section__tools">
+          <input id="searchInput" class="input" type="search" placeholder="検索（例: コーヒー）" />
+          <select id="sortSelect" class="select">
+            <option value="featured">おすすめ順</option>
+            <option value="priceAsc">価格が安い順</option>
+            <option value="priceDesc">価格が高い順</option>
+            <option value="nameAsc">名前順</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="productGrid" class="grid"></div>
+    </section>
+
+    <section id="cart" class="section">
+      <div class="section__head">
+        <h2 class="section__title">カート</h2>
+        <div class="badge" id="cartBadge">0点</div>
+      </div>
+
+      <div class="cart">
+        <div id="cartItems" class="cart__items"></div>
+
+        <aside class="cart__summary">
+          <div class="summary">
+            <div class="summary__row">
+              <span>小計</span>
+              <strong id="subtotal">¥0</strong>
+            </div>
+            <div class="summary__row">
+              <span>送料</span>
+              <strong id="shipping">¥0</strong>
+            </div>
+            <div class="summary__row summary__row--total">
+              <span>合計</span>
+              <strong id="total">¥0</strong>
+            </div>
+
+            <p class="note">
+              ※送料はサンプルです（設定は <code>app.js</code> の <code>calcShipping</code> で変更できます）
+            </p>
+
+            <a class="button button--primary button--full" href="checkout.html">
+              注文へ進む
+            </a>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <small>© Simple Shop. Built on GitHub Pages.</small>
+    </footer>
+  </main>
+
+  <script src="products.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
