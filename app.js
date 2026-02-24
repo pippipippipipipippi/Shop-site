@@ -223,7 +223,7 @@ checkoutLinks.forEach(a => {
    const API_BASE = "https://simple-shop-api.toytoy0517.workers.dev";
 
     try {
-      const res = await fetch(`${API_BASE}/api/create-checkout-session`, {
+     const res = await fetch(API_BASE, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ items }),
