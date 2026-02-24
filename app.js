@@ -205,14 +205,47 @@ function setup() {
 
   // checkoutページへカート内容を渡す（URLクエリ）
   // checkout.html 側で読み取って textarea に入れる
-  const checkoutLinks = document.querySelectorAll('a[href="checkout.html"]');
-  checkoutLinks.forEach(a => {
-    a.addEventListener("click", (e) => {
-      const cart = loadCart();
-      const payload = buildOrderPayload(cart);
-      a.href = "checkout.html?order=" + encodeURIComponent(payload);
-    });
+const checkoutLinks = document.querySelectorAll('a[href="checkout.html"]');
+checkoutLinks.forEach(a => {
+  a.addEventListener("click", async (e) => {
+    e.preventDefault();
+
+    const cart = loadCart();
+    const items = Object.entries(cart)
+      .filter(([_, qty]) => qty > 0)
+      .map(([id, qty]) => ({ id, qty }));
+
+    if (items.length === 0) {
+      alert("カートが空です。");
+      return;
+    }
+
+    // あなたのWorkerのURLに変更（後で作ります）
+    const API_BASE = "https://YOUR-WORKER.your-subdomain.workers.dev";
+
+    try {
+      const res = await fetch(`${API_BASE}/api/create-checkout-session`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items }),
+      });
+
+      if (!res.ok) {
+        const t = await res.text();
+        throw new Error(t || "API error");
+      }
+
+      const data = await res.json();
+      if (!data?.url) throw new Error("No checkout url");
+
+      // Stripe Checkoutへ飛ぶ
+      location.href = data.url;
+    } catch (err) {
+      console.error(err);
+      alert("決済ページの作成に失敗しました。時間をおいて再試行してください。");
+    }
   });
+});
 }
 
 function buildOrderPayload(cart) {
