@@ -1,3 +1,4 @@
+document.documentElement.setAttribute("data-appjs", "loaded");
 const STORAGE_KEY = "simple_shop_cart_v1";
 
 function yen(n) {
