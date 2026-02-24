@@ -203,11 +203,7 @@ function setup() {
 
   document.getElementById("clearCartBtn")?.addEventListener("click", clearCart);
 
-  // checkoutページへカート内容を渡す（URLクエリ）
-  // checkout.html 側で読み取って textarea に入れる
-const checkoutLinks = document.querySelectorAll('a[href="checkout.html"]');
-checkoutLinks.forEach(a => {
-  a.addEventListener("click", async (e) => {
+    async function goCheckout(e) {
     e.preventDefault();
 
     const cart = loadCart();
@@ -220,34 +216,23 @@ checkoutLinks.forEach(a => {
       return;
     }
 
-   const API_BASE = "https://simple-shop-api.toytoy0517.workers.dev";
+    const API_BASE = "https://simple-shop-api.toytoy0517.workers.dev";
 
-    try {
-     const res = await fetch(API_BASE, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items }),
-      });
+    const res = await fetch(API_BASE, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ items }),
+    });
 
-      if (!res.ok) {
-        const t = await res.text();
-        throw new Error(t || "API error");
-      }
+    const data = await res.json();
+    if (!data?.url) throw new Error("No checkout url");
+    location.href = data.url;
+  }
 
-      const data = await res.json();
-      if (!data?.url) throw new Error("No checkout url");
+  document.getElementById("checkoutBtn")?.addEventListener("click", goCheckout);
+  document.getElementById("checkoutBtnTop")?.addEventListener("click", goCheckout);
 
-      // Stripe Checkoutへ飛ぶ
-      location.href = data.url;
-    } catch (err) {
-      console.error(err);
-      alert("決済ページの作成に失敗しました。時間をおいて再試行してください。");
-    }
-  });
-});
-}
-
-function buildOrderPayload(cart) {
+  function buildOrderPayload(cart) {
   const map = new Map(window.PRODUCTS.map(p => [p.id, p]));
   const lines = [];
   let subtotal = 0;
