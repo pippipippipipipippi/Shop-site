@@ -220,8 +220,7 @@ checkoutLinks.forEach(a => {
       return;
     }
 
-    // あなたのWorkerのURLに変更（後で作ります）
-    const API_BASE = "https://YOUR-WORKER.your-subdomain.workers.dev";
+   const API_BASE = "https://simple-shop-api.toytoy0517.workers.dev";
 
     try {
       const res = await fetch(`${API_BASE}/api/create-checkout-session`, {
