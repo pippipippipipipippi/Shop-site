@@ -17,3 +17,4 @@ window.PRODUCTS = [
     tag: "定番",
     desc: "一般的なリップクリームに対応",
   }
+];
