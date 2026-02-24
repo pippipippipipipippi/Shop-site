@@ -99,5 +99,28 @@
 
   <script src="products.js"></script>
   <script src="app.js"></script>
-</body>
-</html>
+
+    <script src="products.js"></script>
+  <script src="app.js"></script>
+
+  <!-- 診断（あとで消してOK） -->
+  <script>
+    const p = window.PRODUCTS;
+    const hasSetup = typeof window.setup === "function"; // もしsetupがglobalならtrue
+    const msg =
+      "products.js: " + (p ? "OK" : "NG") + "\n" +
+      "PRODUCTS length: " + (p?.length ?? "null") + "\n" +
+      "app.js loaded: " + (document.documentElement.getAttribute("data-appjs") || "不明") + "\n" +
+      "setup global: " + (hasSetup ? "YES" : "NO") + "\n";
+    const pre = document.createElement("pre");
+    pre.textContent = msg;
+    pre.style.position = "fixed";
+    pre.style.left = "12px";
+    pre.style.bottom = "12px";
+    pre.style.padding = "12px";
+    pre.style.background = "rgba(0,0,0,0.75)";
+    pre.style.color = "#fff";
+    pre.style.zIndex = "99999";
+    pre.style.borderRadius = "12px";
+    document.body.appendChild(pre);
+  </script>
