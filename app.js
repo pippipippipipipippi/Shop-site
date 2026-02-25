@@ -205,15 +205,54 @@ function clearCart() {
 async function goCheckout(e) {
   e.preventDefault();
 
-  const cart = loadCart();
-  const items = Object.entries(cart)
-    .filter(([_, qty]) => qty > 0)
-    .map(([id, qty]) => ({ id, qty }));
+  try {
+    const cart = loadCart();
+    const items = Object.entries(cart)
+      .filter(([_, qty]) => qty > 0)
+      .map(([id, qty]) => ({ id, qty }));
 
-  if (items.length === 0) {
-    alert("カートが空です。");
-    return;
+    if (items.length === 0) {
+      alert("カートが空です。");
+      return;
+    }
+
+    const API_BASE = "https://simple-shop-api.toytoy0517.workers.dev";
+    const endpoint = `${API_BASE}/api/create-checkout-session`;
+
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ items }),
+    });
+
+    const text = await res.text();
+
+    // 失敗をそのまま表示
+    if (!res.ok) {
+      alert(`APIエラー: ${res.status}\n${text.slice(0, 400)}`);
+      return;
+    }
+
+    // JSONでなければ表示
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      alert(`JSONじゃない返答です:\n${text.slice(0, 400)}`);
+      return;
+    }
+
+    // urlが無ければ表示
+    if (!data?.url) {
+      alert(`urlが返ってきません:\n${text.slice(0, 400)}`);
+      return;
+    }
+
+    location.href = data.url;
+  } catch (err) {
+    alert(`例外:\n${String(err)}`);
   }
+}
 
   const API_BASE = "https://simple-shop-api.toytoy0517.workers.dev";
 
