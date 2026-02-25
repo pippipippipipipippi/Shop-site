@@ -27,11 +27,27 @@
       <div class="summary">
         <h2 style="margin:0 0 8px;">決済が完了しました</h2>
         <p class="note" style="margin-top:0;">
-          ご注文は確定しました。確認メールが届きます。届かない場合は迷惑メールをご確認ください。
+          決済が完了しました。確認メールが届きます（迷惑メールも確認）。
         </p>
-        <a class="button button--primary" href="index.html">商品一覧に戻る</a>
+
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <a class="button button--primary" href="index.html">商品一覧に戻る</a>
+          <button class="button" id="clearBtn" type="button">カートを空にする</button>
+        </div>
       </div>
     </section>
   </main>
+
+  <script>
+    // 決済後はカートを空にするのが普通
+    const STORAGE_KEY = "simple_shop_cart_v1";
+    document.getElementById("clearBtn").addEventListener("click", () => {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({}));
+      location.href = "index.html";
+    });
+
+    // 自動クリア（好みで。嫌なら消してOK）
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({}));
+  </script>
 </body>
 </html>
