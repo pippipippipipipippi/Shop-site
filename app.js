@@ -26,7 +26,7 @@ function cartCount(cart) {
 }
 
 function calcSubtotal(cart) {
-  const map = new Map(window.PRODUCTS.map(p => [p.id, p]));
+  const map = new Map((window.PRODUCTS || []).map((p) => [p.id, p]));
   let sum = 0;
   for (const [id, qty] of Object.entries(cart)) {
     const p = map.get(id);
@@ -45,6 +45,15 @@ function calcShipping(subtotal) {
   return 600;
 }
 
+function escapeHtml(s) {
+  return String(s)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
 function renderProducts() {
   const grid = document.getElementById("productGrid");
   if (!grid) return;
@@ -52,19 +61,21 @@ function renderProducts() {
   const q = (document.getElementById("searchInput")?.value || "").trim().toLowerCase();
   const sort = document.getElementById("sortSelect")?.value || "featured";
 
-  let items = [...window.PRODUCTS];
+  let items = [...(window.PRODUCTS || [])];
 
   if (q) {
-    items = items.filter(p =>
+    items = items.filter((p) =>
       (p.name + " " + p.desc + " " + p.tag).toLowerCase().includes(q)
     );
   }
 
-  if (sort === "priceAsc") items.sort((a,b) => a.price - b.price);
-  if (sort === "priceDesc") items.sort((a,b) => b.price - a.price);
-  if (sort === "nameAsc") items.sort((a,b) => a.name.localeCompare(b.name, "ja"));
+  if (sort === "priceAsc") items.sort((a, b) => a.price - b.price);
+  if (sort === "priceDesc") items.sort((a, b) => b.price - a.price);
+  if (sort === "nameAsc") items.sort((a, b) => a.name.localeCompare(b.name, "ja"));
 
-  grid.innerHTML = items.map(p => `
+  grid.innerHTML = items
+    .map(
+      (p) => `
     <article class="card">
       <div class="card__img" aria-hidden="true">${p.icon}</div>
       <div class="card__body">
@@ -81,9 +92,11 @@ function renderProducts() {
         </button>
       </div>
     </article>
-  `).join("");
+  `
+    )
+    .join("");
 
-  grid.querySelectorAll("[data-add]").forEach(btn => {
+  grid.querySelectorAll("[data-add]").forEach((btn) => {
     btn.addEventListener("click", () => addToCart(btn.getAttribute("data-add")));
   });
 }
@@ -97,7 +110,7 @@ function renderCart() {
   const cartItems = document.getElementById("cartItems");
   if (!cartItems) return;
 
-  const map = new Map(window.PRODUCTS.map(p => [p.id, p]));
+  const map = new Map((window.PRODUCTS || []).map((p) => [p.id, p]));
   const entries = Object.entries(cart).filter(([id, qty]) => map.has(id) && qty > 0);
 
   if (entries.length === 0) {
@@ -109,10 +122,11 @@ function renderCart() {
       </div>
     `;
   } else {
-    cartItems.innerHTML = entries.map(([id, qty]) => {
-      const p = map.get(id);
-      const line = p.price * qty;
-      return `
+    cartItems.innerHTML = entries
+      .map(([id, qty]) => {
+        const p = map.get(id);
+        const line = p.price * qty;
+        return `
         <div class="cartItem">
           <div class="cartItem__icon" aria-hidden="true">${p.icon}</div>
           <div class="cartItem__main">
@@ -137,23 +151,27 @@ function renderCart() {
           </div>
         </div>
       `;
-    }).join("");
+      })
+      .join("");
   }
 
-  cartItems.querySelectorAll("[data-inc]").forEach(b => b.addEventListener("click", () => changeQty(b.getAttribute("data-inc"), +1)));
-  cartItems.querySelectorAll("[data-dec]").forEach(b => b.addEventListener("click", () => changeQty(b.getAttribute("data-dec"), -1)));
-  cartItems.querySelectorAll("[data-remove]").forEach(b => b.addEventListener("click", () => removeFromCart(b.getAttribute("data-remove"))));
+  cartItems
+    .querySelectorAll("[data-inc]")
+    .forEach((b) => b.addEventListener("click", () => changeQty(b.getAttribute("data-inc"), +1)));
+  cartItems
+    .querySelectorAll("[data-dec]")
+    .forEach((b) => b.addEventListener("click", () => changeQty(b.getAttribute("data-dec"), -1)));
+  cartItems
+    .querySelectorAll("[data-remove]")
+    .forEach((b) => b.addEventListener("click", () => removeFromCart(b.getAttribute("data-remove"))));
 
   const subtotal = calcSubtotal(cart);
   const shipping = calcShipping(subtotal);
   const total = subtotal + shipping;
 
-  const subtotalEl = document.getElementById("subtotal");
-  const shippingEl = document.getElementById("shipping");
-  const totalEl = document.getElementById("total");
-  if (subtotalEl) subtotalEl.textContent = yen(subtotal);
-  if (shippingEl) shippingEl.textContent = yen(shipping);
-  if (totalEl) totalEl.textContent = yen(total);
+  document.getElementById("subtotal") && (document.getElementById("subtotal").textContent = yen(subtotal));
+  document.getElementById("shipping") && (document.getElementById("shipping").textContent = yen(shipping));
+  document.getElementById("total") && (document.getElementById("total").textContent = yen(total));
 }
 
 function addToCart(id) {
@@ -184,13 +202,30 @@ function clearCart() {
   renderCart();
 }
 
-function escapeHtml(s) {
-  return String(s)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+async function goCheckout(e) {
+  e.preventDefault();
+
+  const cart = loadCart();
+  const items = Object.entries(cart)
+    .filter(([_, qty]) => qty > 0)
+    .map(([id, qty]) => ({ id, qty }));
+
+  if (items.length === 0) {
+    alert("カートが空です。");
+    return;
+  }
+
+  const API_BASE = "https://simple-shop-api.toytoy0517.workers.dev";
+
+  const res = await fetch(`${API_BASE}/api/create-checkout-session`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ items }),
+  });
+
+  const data = await res.json();
+  if (!data?.url) throw new Error("No checkout url");
+  location.href = data.url;
 }
 
 function setup() {
@@ -203,58 +238,8 @@ function setup() {
   sort?.addEventListener("change", renderProducts);
 
   document.getElementById("clearCartBtn")?.addEventListener("click", clearCart);
-
-    async function goCheckout(e) {
-    e.preventDefault();
-
-    const cart = loadCart();
-    const items = Object.entries(cart)
-      .filter(([_, qty]) => qty > 0)
-      .map(([id, qty]) => ({ id, qty }));
-
-    if (items.length === 0) {
-      alert("カートが空です。");
-      return;
-    }
-
-    const API_BASE = "https://simple-shop-api.toytoy0517.workers.dev";
-
-    const res = await fetch(API_BASE, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ items }),
-    });
-
-    const data = await res.json();
-    if (!data?.url) throw new Error("No checkout url");
-    location.href = data.url;
-  }
-
   document.getElementById("checkoutBtn")?.addEventListener("click", goCheckout);
   document.getElementById("checkoutBtnTop")?.addEventListener("click", goCheckout);
-
-  function buildOrderPayload(cart) {
-  const map = new Map(window.PRODUCTS.map(p => [p.id, p]));
-  const lines = [];
-  let subtotal = 0;
-
-  for (const [id, qty] of Object.entries(cart)) {
-    const p = map.get(id);
-    if (!p || qty <= 0) continue;
-    const line = p.price * qty;
-    subtotal += line;
-    lines.push(`${p.name} × ${qty} = ${yen(line)}`);
-  }
-
-  const shipping = calcShipping(subtotal);
-  const total = subtotal + shipping;
-
-  lines.push(`---`);
-  lines.push(`小計: ${yen(subtotal)}`);
-  lines.push(`送料: ${yen(shipping)}`);
-  lines.push(`合計: ${yen(total)}`);
-
-  return lines.join("\n");
 }
 
 document.addEventListener("DOMContentLoaded", setup);
