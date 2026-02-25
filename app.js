@@ -1,4 +1,5 @@
 document.documentElement.setAttribute("data-appjs", "loaded");
+
 const STORAGE_KEY = "simple_shop_cart_v1";
 
 function yen(n) {
@@ -36,9 +37,7 @@ function calcSubtotal(cart) {
   return sum;
 }
 
-// 送料ルール（サンプル）
-// - 小計 4000円以上 → 送料無料
-// - それ以外 → 600円
+// 送料（例）: 小計4000円以上は無料、それ以外600円
 function calcShipping(subtotal) {
   if (subtotal === 0) return 0;
   if (subtotal >= 4000) return 0;
@@ -76,23 +75,23 @@ function renderProducts() {
   grid.innerHTML = items
     .map(
       (p) => `
-    <article class="card">
-      <div class="card__img" aria-hidden="true">${p.icon}</div>
-      <div class="card__body">
-        <div class="card__row">
-          <h3 class="card__title">${escapeHtml(p.name)}</h3>
+      <article class="card">
+        <div class="card__img" aria-hidden="true">${p.icon}</div>
+        <div class="card__body">
+          <div class="card__row">
+            <h3 class="card__title">${escapeHtml(p.name)}</h3>
+          </div>
+          <p class="card__desc">${escapeHtml(p.desc)}</p>
+          <div class="card__row">
+            <span class="pill">${escapeHtml(p.tag)}</span>
+            <span class="price">${yen(p.price)}</span>
+          </div>
+          <button class="button button--primary" type="button" data-add="${p.id}">
+            カートに追加
+          </button>
         </div>
-        <p class="card__desc">${escapeHtml(p.desc)}</p>
-        <div class="card__row">
-          <span class="pill">${escapeHtml(p.tag)}</span>
-          <span class="price">${yen(p.price)}</span>
-        </div>
-        <button class="button button--primary" type="button" data-add="${p.id}">
-          カートに追加
-        </button>
-      </div>
-    </article>
-  `
+      </article>
+    `
     )
     .join("");
 
@@ -127,51 +126,54 @@ function renderCart() {
         const p = map.get(id);
         const line = p.price * qty;
         return `
-        <div class="cartItem">
-          <div class="cartItem__icon" aria-hidden="true">${p.icon}</div>
-          <div class="cartItem__main">
-            <div class="cartItem__top">
-              <div>
-                <p class="cartItem__name">${escapeHtml(p.name)}</p>
-                <div class="cartItem__meta">${escapeHtml(p.tag)} ・ ${yen(p.price)} / 個</div>
+          <div class="cartItem">
+            <div class="cartItem__icon" aria-hidden="true">${p.icon}</div>
+            <div class="cartItem__main">
+              <div class="cartItem__top">
+                <div>
+                  <p class="cartItem__name">${escapeHtml(p.name)}</p>
+                  <div class="cartItem__meta">${escapeHtml(p.tag)} ・ ${yen(p.price)} / 個</div>
+                </div>
+                <div style="text-align:right;">
+                  <div class="price">${yen(line)}</div>
+                  <button class="button button--danger" type="button" data-remove="${id}">削除</button>
+                </div>
               </div>
-              <div style="text-align:right;">
-                <div class="price">${yen(line)}</div>
-                <button class="button button--danger" type="button" data-remove="${id}">削除</button>
-              </div>
-            </div>
 
-            <div class="cartItem__actions">
-              <div class="qty" role="group" aria-label="数量">
-                <button type="button" data-dec="${id}">−</button>
-                <span>${qty}</span>
-                <button type="button" data-inc="${id}">＋</button>
+              <div class="cartItem__actions">
+                <div class="qty" role="group" aria-label="数量">
+                  <button type="button" data-dec="${id}">−</button>
+                  <span>${qty}</span>
+                  <button type="button" data-inc="${id}">＋</button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      `;
+        `;
       })
       .join("");
   }
 
-  cartItems
-    .querySelectorAll("[data-inc]")
-    .forEach((b) => b.addEventListener("click", () => changeQty(b.getAttribute("data-inc"), +1)));
-  cartItems
-    .querySelectorAll("[data-dec]")
-    .forEach((b) => b.addEventListener("click", () => changeQty(b.getAttribute("data-dec"), -1)));
-  cartItems
-    .querySelectorAll("[data-remove]")
-    .forEach((b) => b.addEventListener("click", () => removeFromCart(b.getAttribute("data-remove"))));
+  cartItems.querySelectorAll("[data-inc]").forEach((b) =>
+    b.addEventListener("click", () => changeQty(b.getAttribute("data-inc"), +1))
+  );
+  cartItems.querySelectorAll("[data-dec]").forEach((b) =>
+    b.addEventListener("click", () => changeQty(b.getAttribute("data-dec"), -1))
+  );
+  cartItems.querySelectorAll("[data-remove]").forEach((b) =>
+    b.addEventListener("click", () => removeFromCart(b.getAttribute("data-remove")))
+  );
 
   const subtotal = calcSubtotal(cart);
   const shipping = calcShipping(subtotal);
   const total = subtotal + shipping;
 
-  document.getElementById("subtotal") && (document.getElementById("subtotal").textContent = yen(subtotal));
-  document.getElementById("shipping") && (document.getElementById("shipping").textContent = yen(shipping));
-  document.getElementById("total") && (document.getElementById("total").textContent = yen(total));
+  const subtotalEl = document.getElementById("subtotal");
+  const shippingEl = document.getElementById("shipping");
+  const totalEl = document.getElementById("total");
+  if (subtotalEl) subtotalEl.textContent = yen(subtotal);
+  if (shippingEl) shippingEl.textContent = yen(shipping);
+  if (totalEl) totalEl.textContent = yen(total);
 }
 
 function addToCart(id) {
@@ -202,6 +204,7 @@ function clearCart() {
   renderCart();
 }
 
+// ✅ Stripeへ飛ばす（失敗理由を必ずアラート表示）
 async function goCheckout(e) {
   e.preventDefault();
 
@@ -227,13 +230,11 @@ async function goCheckout(e) {
 
     const text = await res.text();
 
-    // 失敗をそのまま表示
     if (!res.ok) {
       alert(`APIエラー: ${res.status}\n${text.slice(0, 400)}`);
       return;
     }
 
-    // JSONでなければ表示
     let data;
     try {
       data = JSON.parse(text);
@@ -242,7 +243,6 @@ async function goCheckout(e) {
       return;
     }
 
-    // urlが無ければ表示
     if (!data?.url) {
       alert(`urlが返ってきません:\n${text.slice(0, 400)}`);
       return;
@@ -252,19 +252,6 @@ async function goCheckout(e) {
   } catch (err) {
     alert(`例外:\n${String(err)}`);
   }
-}
-
-  const API_BASE = "https://simple-shop-api.toytoy0517.workers.dev";
-
-  const res = await fetch(`${API_BASE}/api/create-checkout-session`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ items }),
-  });
-
-  const data = await res.json();
-  if (!data?.url) throw new Error("No checkout url");
-  location.href = data.url;
 }
 
 function setup() {
