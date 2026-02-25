@@ -229,17 +229,15 @@ async function goCheckout(e) {
     });
 
     const text = await res.text();
-
     if (!res.ok) {
       alert(`APIエラー: ${res.status}\n${text.slice(0, 400)}`);
       return;
     }
 
     let data;
-    try {
-      data = JSON.parse(text);
-    } catch {
-      alert(`JSONじゃない返答です:\n${text.slice(0, 400)}`);
+    try { data = JSON.parse(text); }
+    catch {
+      alert(`JSONじゃない返答:\n${text.slice(0, 400)}`);
       return;
     }
 
@@ -253,7 +251,6 @@ async function goCheckout(e) {
     alert(`例外:\n${String(err)}`);
   }
 }
-
 function setup() {
   renderProducts();
   renderCart();
